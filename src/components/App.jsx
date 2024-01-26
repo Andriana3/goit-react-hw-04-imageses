@@ -12,54 +12,56 @@ export const App = () => {
   const [totalHits, setTotalHits] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [reqID, setReqID] = useState(1);
+  const [showBtn, setShowBtn] = useState(true); // Додали новий стан
 
   useEffect(() => {
     if (!query) {
       return;
     }
 
-    setImages([]);
     setIsLoading(true);
 
-    const fetchImages = async () => {
+    const fetchData = async () => {
       try {
-        const result = await addImages(query, 1);
-        setImages(result.hits);
-        setPage(1);
+        const result = await addImages(query, page);
+        if (!result.hits.length) {
+          setIsLoading(false);
+          setShowBtn(false);
+          return alert('Співпадінь не знайдено');
+        }
+
+        setImages(prevState => [...prevState, ...result.hits]);
         setTotalHits(result.totalHits);
         setIsLoading(false);
-        setError(null);
+        setShowBtn(true);
       } catch (error) {
         setImages([]);
-        setPage(1);
         setTotalHits(0);
         setIsLoading(false);
         setError(error);
       }
     };
 
-    fetchImages();
-  }, [query, reqID]);
+    fetchData();
+  }, [query, page]);
 
-  const loadMore = async () => {
-    setIsLoading(true);
-    const result = await addImages(query, page + 1);
-    setImages([...images, ...result.hits]);
-    setPage(page + 1);
-    setIsLoading(false);
-  };
-
-  const handleSearch = newQuery => {
-    if (newQuery.toLowerCase() === query.toLowerCase()) {
+  const handleSubmit = inputValue => {
+    if (query === inputValue) {
       return alert(`Ви вже переглядаєте зображення для запиту "${query}"`);
     }
 
-    setQuery(newQuery);
-    setReqID(prevID => prevID + 1);
+    setQuery(inputValue.toLowerCase());
+    setPage(1);
+    setImages([]);
+    setTotalHits(0);
+    setIsLoading(false);
+    setError(null);
+    setShowBtn(true);
   };
 
-  const maxPage = Math.ceil(totalHits / 12);
+  const onLoadMoreClick = () => {
+    setPage(prevState => prevState + 1);
+  };
 
   return (
     <div
@@ -70,7 +72,7 @@ export const App = () => {
         paddingBottom: '24px',
       }}
     >
-      <Searchbar onSabmit={handleSearch} />
+      <Searchbar onSabmit={handleSubmit} />
 
       {error && !isLoading && (
         <h1
@@ -86,9 +88,10 @@ export const App = () => {
 
       {isLoading && <Loader />}
 
-      {!!images.length && page < maxPage && !isLoading && (
-        <Button onClick={loadMore} isLoading={isLoading} />
-      )}
+      {!!images.length &&
+        page < Math.ceil(totalHits / 12) &&
+        !isLoading &&
+        showBtn && <Button onClick={onLoadMoreClick} isLoading={isLoading} />}
     </div>
   );
 };

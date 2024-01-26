@@ -1,100 +1,94 @@
-import { React, Component } from 'react';
+import { React, useState, useEffect } from 'react';
 import { Searchbar } from 'components/Searchbar/Searchbar';
 import { ImageGallery } from 'components/ImageGallery/ImageGallery';
 import { Button } from 'components/Button/Button';
 import { Loader } from 'components/Loader/Loader';
 import { addImages } from 'services/api';
 
-// ______________________________________________
-export class App extends Component {
-  state = {
-    images: [],
-    query: '',
-    page: 1,
-    totalHits: 0,
-    isLoading: false,
-    error: null,
-  };
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalHits, setTotalHits] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [reqID, setReqID] = useState(1);
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { query, page } = this.state;
-
-    if (query !== prevState.query || page !== prevState.page) {
-      this.setState({ isLoading: true });
-
-      try {
-        const result = await addImages(query, page);
-
-        this.setState(prevState => ({
-          images:
-            prevState.page === 1
-              ? result.hits
-              : [...prevState.images, ...result.hits],
-          totalHits: result.totalHits,
-          isLoading: false,
-          error: null,
-        }));
-      } catch (error) {
-        this.setState({
-          images: [],
-          totalHits: 0,
-          isLoading: false,
-          error: error,
-        });
-      }
+  useEffect(() => {
+    if (!query) {
+      return;
     }
-  }
 
-  loadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+    setImages([]);
+    setIsLoading(true);
+
+    const fetchImages = async () => {
+      try {
+        const result = await addImages(query, 1);
+        setImages(result.hits);
+        setPage(1);
+        setTotalHits(result.totalHits);
+        setIsLoading(false);
+        setError(null);
+      } catch (error) {
+        setImages([]);
+        setPage(1);
+        setTotalHits(0);
+        setIsLoading(false);
+        setError(error);
+      }
+    };
+
+    fetchImages();
+  }, [query, reqID]);
+
+  const loadMore = async () => {
+    setIsLoading(true);
+    const result = await addImages(query, page + 1);
+    setImages([...images, ...result.hits]);
+    setPage(page + 1);
+    setIsLoading(false);
   };
 
-  handleSearch = query => {
-    this.setState({
-      query,
-      images: [],
-      page: 1,
-      totalHits: 0,
-      isLoading: false,
-      error: null,
-    });
+  const handleSearch = newQuery => {
+    if (newQuery.toLowerCase() === query.toLowerCase()) {
+      return alert(`Ви вже переглядаєте зображення для запиту "${query}"`);
+    }
+
+    setQuery(newQuery);
+    setReqID(prevID => prevID + 1);
   };
 
-  render() {
-    const { images, page, totalHits, isLoading, error } = this.state;
-    const maxPage = Math.ceil(totalHits / 12);
+  const maxPage = Math.ceil(totalHits / 12);
 
-    return (
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr',
-          gridGap: '16px',
-          paddingBottom: '24px',
-        }}
-      >
-        <Searchbar onSabmit={this.handleSearch} />
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gridGap: '16px',
+        paddingBottom: '24px',
+      }}
+    >
+      <Searchbar onSabmit={handleSearch} />
 
-        {error && !isLoading && (
-          <h1
-            style={{
-              margin: '25px auto',
-            }}
-          >
-            {error.message}
-          </h1>
-        )}
+      {error && !isLoading && (
+        <h1
+          style={{
+            margin: '25px auto',
+          }}
+        >
+          {error.message}
+        </h1>
+      )}
 
-        {!!images.length && <ImageGallery images={images} />}
+      {!!images.length && <ImageGallery images={images} />}
 
-        {isLoading && <Loader />}
+      {isLoading && <Loader />}
 
-        {!!images.length && page < maxPage && !isLoading && (
-          <Button onClick={this.loadMore} isLoading={isLoading} />
-        )}
-      </div>
-    );
-  }
-}
+      {!!images.length && page < maxPage && !isLoading && (
+        <Button onClick={loadMore} isLoading={isLoading} />
+      )}
+    </div>
+  );
+};

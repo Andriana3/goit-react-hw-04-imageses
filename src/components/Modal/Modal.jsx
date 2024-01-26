@@ -1,28 +1,24 @@
 import { Overlay, ModalStl } from 'components/Modal/Modal.styled';
-import { Component } from 'react';
+import PropTypes from 'prop-types';
+import { useEffect } from 'react';
 
-export class Modal extends Component {
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeyDown);
-  }
+export const Modal = ({ src, alt, onClick }) => {
+  useEffect(() => {
+    window.addEventListener('keydown', onClick);
+    return () => window.removeEventListener('keydown', onClick);
+  });
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeyDown);
-  }
+  return (
+    <Overlay onClick={onClick}>
+      <ModalStl>
+        <img src={src} alt={alt} />
+      </ModalStl>
+    </Overlay>
+  );
+};
 
-  handleKeyDown = e => {
-    this.props.onClick(e);
-  };
-
-  render() {
-    const { src, alt, onClick } = this.props;
-
-    return (
-      <Overlay onClick={onClick}>
-        <ModalStl>
-          <img src={src} alt={alt} />
-        </ModalStl>
-      </Overlay>
-    );
-  }
-}
+Modal.propTypes = {
+  src: PropTypes.string.isRequired,
+  alt: PropTypes.string.isRequired,
+  onClick: PropTypes.func.isRequired,
+};

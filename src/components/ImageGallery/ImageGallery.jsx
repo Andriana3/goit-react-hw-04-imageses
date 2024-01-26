@@ -1,4 +1,5 @@
 import { React } from 'react';
+import PropTypes from 'prop-types';
 import { ImageGalleryItem } from 'components/ImageGallery/ImageGalleryItem';
 import { ImageGalleryStld } from 'components/ImageGallery/ImageGallery.styled';
 
@@ -13,11 +14,23 @@ export const ImageGallery = ({ images }) => {
               src={image.webformatURL}
               srcLarge={image.largeImageURL}
               alt={image.tags}
-              image={image}
             />
           );
         })}
       </ImageGalleryStld>
     </div>
   );
+};
+
+ImageGallery.propTypes = {
+  images: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      pageURL: PropTypes.string.isRequired,
+      type: PropTypes.string.isRequired,
+      tags: PropTypes.string.isRequired,
+      largeImageURL: PropTypes.string.isRequired,
+      webformatURL: PropTypes.string.isRequired,
+    })
+  ).isRequired,
 };

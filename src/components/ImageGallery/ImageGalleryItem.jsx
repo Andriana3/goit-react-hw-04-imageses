@@ -1,38 +1,38 @@
-import { Component, React } from 'react';
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { Modal } from 'components/Modal/Modal';
 import {
   ImageGalleryItemStld,
   ImageGalleryImageStld,
 } from 'components/ImageGallery/ImageGallery.styled';
 
-export class ImageGalleryItem extends Component {
-  state = {
-    isModalOpen: false,
-  };
+export const ImageGalleryItem = ({ src, alt, srcLarge }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  handleModalTungle = e => {
+  const handleModalTungle = e => {
     if (e.code === 'Escape' || e.currentTarget === e.target) {
-      this.setState(prevState => ({ isModalOpen: !prevState.isModalOpen }));
+      setIsModalOpen(!isModalOpen);
     }
   };
 
-  render() {
-    const { src, alt, srcLarge } = this.props;
-    const { isModalOpen } = this.state;
+  return (
+    <>
+      <ImageGalleryItemStld>
+        <ImageGalleryImageStld
+          src={src}
+          alt={alt}
+          onClick={handleModalTungle}
+        />
+      </ImageGalleryItemStld>
+      {isModalOpen && (
+        <Modal src={srcLarge} alt={alt} onClick={handleModalTungle} />
+      )}
+    </>
+  );
+};
 
-    return (
-      <>
-        <ImageGalleryItemStld>
-          <ImageGalleryImageStld
-            src={src}
-            alt={alt}
-            onClick={this.handleModalTungle}
-          />
-        </ImageGalleryItemStld>
-        {isModalOpen && (
-          <Modal src={srcLarge} alt={alt} onClick={this.handleModalTungle} />
-        )}
-      </>
-    );
-  }
-}
+ImageGalleryItem.propTypes = {
+  src: PropTypes.string.isRequired,
+  alt: PropTypes.string.isRequired,
+  srcLarge: PropTypes.string.isRequired,
+};
